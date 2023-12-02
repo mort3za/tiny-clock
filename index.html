@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clock</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.9/dist/vue.global.prod.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        height: 100vh;
+        height: 100dvh;
+        display: grid;
+        place-items: center;
+        background-color: #1e1e1e;
+        color: #eee;
+        font-family: sans-serif;
+      }
+
+      .clock {
+        font-size: 2em;
+        font-weight: bold;
+      }
+
+      .block {
+        display: block;
+      }
+
+      .text-sm {
+        font-size: 1rem;
+      }
+
+      .text-xs {
+        font-size: 0.8rem;
+      }
+
+      .pointer {
+        cursor: pointer;
+      }
+
+      .link {
+        color: #f1c40f;
+      }
+
+      .mt-20 {
+        margin-top: 20px;
+      }
+
+      .timezones {
+        background-color: #2d2d2d;
+        color: #eee;
+        border: none;
+        padding: 8px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body class="text-sm">
+    <div id="app">
+      <div class="clock">{{ currentTime }}</div>
+      <input
+        class="timezones mt-20 block"
+        placeholder="Timezone"
+        list="timezones"
+        v-model="selectedTimezone"
+        @input="updateTimezone"
+        @keypress.enter="timezoneChanged"
+      />
+      <datalist id="timezones">
+        <option v-for="timezone in timezones" :value="timezone" :key="timezone">{{timezone}}</option>
+      </datalist>
+      <a v-if="isResetVisible" class="block mt-20 pointer link text-xs" @click="setDetectedTimezone">Reset</a>
+    </div>
+
+    <script>
+      const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const app = Vue.createApp({
+        data() {
+          return {
+            selectedTimezone: detectedTimezone,
+            currentTime: this.getCurrentTime(),
+            timezones: Intl.supportedValuesOf("timeZone"),
+          };
+        },
+        computed: {
+          selectedTimezoneWithFallback() {
+            if (!this.selectedTimezone || !this.timezones.includes(this.selectedTimezone)) return detectedTimezone;
+            return this.selectedTimezone;
+          },
+          isResetVisible() {
+            return this.selectedTimezoneWithFallback !== detectedTimezone;
+          },
+        },
+        methods: {
+          setDetectedTimezone() {
+            this.selectedTimezone = detectedTimezone;
+          },
+          getCurrentTime() {
+            const now = new Date();
+            const options = { hour12: false, timeZone: this.selectedTimezoneWithFallback };
+            return now.toLocaleTimeString("en-US", options);
+          },
+          updateTimezone(event) {
+            this.selectedTimezone = event.target.value;
+          },
+          timezoneChanged() {
+            event.target.blur();
+          },
+          updateClock() {
+            this.currentTime = this.getCurrentTime();
+          },
+        },
+        mounted() {
+          this.updateClock();
+          setInterval(this.updateClock, 1000);
+        },
+      });
+
+      app.mount("#app");
+    </script>
+  </body>
+</html>
